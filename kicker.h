@@ -1,40 +1,43 @@
 #include <Arduino.h>
 
-// класс детектора шара
+// ball detector class
 class BallDetector {
-  public:
-    BallDetector(int pin);
-    boolean getState();
+public:
+	BallDetector(int pin);
+	bool getState();
 
-  private:
-    int pin; // пин, на котором висит датчик
+private:
+	int pin; // sensor pin
 };
 
 class GoalAnalyzer {
-  public:
-    boolean accumulate(boolean state1, boolean state2);
-  private:
-    int FRONT_UP = 0;
-    int FRONT_DOWN = 1;
-    boolean prevStates[2] = {false, false};
-    int enablingOrder[2] = {0, 0};
-    int disablingOrder[2] = {0, 0};
+public:
+	GoalAnalyzer();
+	bool accumulate(boolean state1, boolean state2);
+private:
+	int FRONT_UP = 1;
+	int FRONT_DOWN = 2;
+	bool prevStates[2] = { false, false };
+	int enablingOrder[2] = { 0, 0 };
+	int disablingOrder[2] = { 0, 0 };
 
-    boolean findCascades(boolean state1, boolean state2);
-    void registerCascade(int number, int event);
+	bool findCascades(boolean state1, boolean state2);
+	void registerCascade(int number, int event);
+	long triggerTime;
 };
 
-// класс 8-сегментного индикатора
+// Indicator
 class Display {
-  public:
-    Display(int powerPin, int* segmentPins);
+public:
+	Display(int powerPin, int *segmentPins);
 
-    void writeDigit(int digit);
-    void setEnabled(boolean enabled);
+	void writeDigit(int digit);
+	void writeDigit(boolean *segmentValues);
+	void setEnabled(boolean enabled);
 
-  private:
-    int* segmentPins;
-    int powerPin;
+private:
+	int *segmentPins;
+	int powerPin;
 
     boolean digits[10][7] = {
       {true,  true,  true,  true,  true,  true,  false}, // 0
@@ -49,7 +52,6 @@ class Display {
       {true,  true,  true,  true,  false, true,  true }, // 9
     };
 
-    void writeDigit(boolean* segmentValues);
 };
 
 int sign(int number);
