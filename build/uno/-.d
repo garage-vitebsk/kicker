@@ -1,0 +1,2 @@
+.sc2740233806708134563.o: \
+ C:\garage\kicker-eclipse\.sc2740233806708134563.cpp
