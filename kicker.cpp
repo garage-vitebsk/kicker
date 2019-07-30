@@ -128,8 +128,84 @@ void Display::writeDigit(boolean *segmentValues) {
 }
 
 void Display::setEnabled(boolean enabled) {
-    digitalWrite(powerPin, enabled);
+    unsigned long currentTime = millis();
+    if (blinkMode && currentTime > nextSwitchTime) {
+        state = enabled;
+        nextSwitchTime = currentTime + blinkDelay;
+        digitalWrite(powerPin, !enabled);
+    }
+    if (!blinkMode || state) {
+        digitalWrite(powerPin, !enabled);
+    }
 }
+
+void Display::setBlinkMode(bool mode) {
+    blinkMode = mode;
+}
+
+// ButtonPanel
+ButtonPanel::ButtonPanel(int pin) {
+    this->pin = pin;
+}
+
+int ButtonPanel::getKeyValue() {         // Функция устраняющая дребезг
+    static int count;
+    static int oldKeyValue; // Переменная для хранения предыдущего значения состояния кнопок
+    static int innerKeyValue;
+
+    // Здесь уже не можем использовать значение АЦП, так как оно постоянно меняется в силу погрешности
+    int actualKeyValue = getButtonNumberByValue(analogRead(pin)); // Преобразовываем его в номер кнопки, тем самым убирая погрешность
+
+    if (innerKeyValue != actualKeyValue) { // Пришло значение отличное от предыдущего
+        count = 0;                     // Все обнуляем и начинаем считать заново
+        innerKeyValue = actualKeyValue;       // Запоминаем новое значение
+    } else {
+        count += 1;                           // Увеличиваем счетчик
+    }
+
+    if ((count >= 5) && (actualKeyValue != oldKeyValue)) {
+        oldKeyValue = actualKeyValue;         // Запоминаем новое значение
+    }
+    return oldKeyValue;
+}
+
+int ButtonPanel::getButtonNumberByValue(int value) { // Новая функция по преобразованию кода нажатой кнопки в её номер
+    for (int i = 0; i <= 3; i++) {
+        // Если значение в заданном диапазоне values[i]+/-error - считаем, что кнопка определена
+        if (value <= values[i] + error && value >= values[i] - error)
+            return i;
+    }
+    return -1;                    // Значение не принадлежит заданному диапазону
+}
+
+// Beeper
+Beeper::Beeper(int pin, int *tones[], int tonesLength) {
+    this->pin = pin;
+    this->tones = tones;
+    this->tonesLength = tonesLength;
+}
+
+void Beeper::setPlay(bool play) {
+    this->play = play;
+}
+
+void Beeper::work() {
+    if (!play) {
+        return;
+    }
+    if (currentTone >= tonesLength - 1) {
+        play = false;
+        currentTone = 0;
+//        digitalWrite(pin, false);
+    }
+    unsigned long currentTime = millis();
+    if (currentTime > nextSwichTime) {
+        nextSwichTime = millis + tones[currentTone][1];
+        tone(pin, tones[currentTone][0], tones[currentTone][1]);
+        currentTone++;
+    }
+}
+
 //-----other functions-----
 int sign(int number) {
     if (number < 0) {
