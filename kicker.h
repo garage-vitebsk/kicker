@@ -15,15 +15,20 @@ class GoalAnalyzer {
         GoalAnalyzer();
         bool accumulate(boolean state1, boolean state2);
     private:
-        int FRONT_UP = 1;
-        int FRONT_DOWN = 2;
+        byte FRONT_UP = 1;
+        byte FRONT_DOWN = 2;
         bool prevStates[2] = { false, false };
-        int enablingOrder[2] = { 0, 0 };
-        int disablingOrder[2] = { 0, 0 };
-
+        byte index = 0;
+        
         bool findCascades(boolean state1, boolean state2);
-        void registerCascade(int number, int event);
+        void registerCascade(byte number, byte event);
         long triggerTime;
+
+        struct Event {
+          byte detectorNumber;
+          byte type;
+          long time;
+        } *events[4];
 };
 
 // Indicator
@@ -68,7 +73,7 @@ class ButtonPanel {
         int pin;
         int getButtonNumberByValue(int value);
         int values[4] = { 0, 615, 769, 1023 };
-        int error = 15;         // ¬еличина отклонени€ от значений - погрешность
+        int error = 15;
 
 };
 

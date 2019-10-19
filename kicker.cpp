@@ -26,7 +26,7 @@ boolean GoalAnalyzer::accumulate(boolean state1, boolean state2) {
     prevStates[0] = state1;
     prevStates[1] = state2;
 
-    if (isDebug) {
+#if DEBUG
         Serial.println("---------enablingOrder---------");
         for (int i = 0; i < 2; i++) {
             Serial.println(enablingOrder[i]);
@@ -37,38 +37,62 @@ boolean GoalAnalyzer::accumulate(boolean state1, boolean state2) {
             Serial.println(disablingOrder[i]);
         }
         Serial.println("-------------------------------------------");
+#endif
+    long up1 = 0;
+    long up2 = 0;
+    long down1 = 0;
+    for (int i = 0; i < 4; i++) {
+      Event *event = events[(index - i) % 4];
+      if (event->detectorNumber == 1) {
+        if (event->type == FRONT_UP) {
+          up1 = event->time;
+        } else {
+          down1 = event->time;
+        }
+      } else {
+        if (event->type == FRONT_UP) {
+          up2 = event->time;
+        }
+      }
     }
-
-    //TODO find which situation is goal
-    if (enablingOrder[0] == 1 && enablingOrder[1] == 2 && disablingOrder[0] == 1
-            && disablingOrder[1] == 2) {
-        enablingOrder[0] = 0;
-        enablingOrder[1] = 0;
-        disablingOrder[0] = 0;
-        disablingOrder[1] = 0;
-        return true;
+    bool goal = (up2 - up1 < 500) && (down1 - up1 < 500);
+    if (goal) {
+      index = 0;
+      for (int i = 0; i < 4; i++) {
+        delete events[i];
+        events[i] = NULL;
+      }
     }
-    if (enablingOrder[0] != 0 && enablingOrder[1] != 0 && disablingOrder[0] != 0
-            && disablingOrder[1] != 0) {
-        enablingOrder[0] = 0;
-        enablingOrder[1] = 0;
-        disablingOrder[0] = 0;
-        disablingOrder[1] = 0;
-    }
-
-    return false;
+    return goal;
+//    if (enablingOrder[0] == 1 && enablingOrder[1] == 2 && disablingOrder[0] == 1
+//            && disablingOrder[1] == 2) {
+//        enablingOrder[0] = 0;
+//        enablingOrder[1] = 0;
+//        disablingOrder[0] = 0;
+//        disablingOrder[1] = 0;
+//        return true;
+//    }
+//    if (enablingOrder[0] != 0 && enablingOrder[1] != 0 && disablingOrder[0] != 0
+//            && disablingOrder[1] != 0) {
+//        enablingOrder[0] = 0;
+//        enablingOrder[1] = 0;
+//        disablingOrder[0] = 0;
+//        disablingOrder[1] = 0;
+//    }
+//
+//    return false;
 }
 
 boolean GoalAnalyzer::findCascades(boolean state1, boolean state2) {
-    if (millis() - triggerTime > 500) {
-        enablingOrder[0] = 0;
-        enablingOrder[1] = 0;
-        disablingOrder[0] = 0;
-        disablingOrder[1] = 0;
-        if (isDebug) {
-            Serial.println("---------clear by timeout---------");
-        }
-    }
+//    if (millis() - triggerTime > 500) {
+//        enablingOrder[0] = 0;
+//        enablingOrder[1] = 0;
+//        disablingOrder[0] = 0;
+//        disablingOrder[1] = 0;
+//#if DEBUG
+//            Serial.println("---------clear by timeout---------");
+//#endif
+//    }
     boolean found = false;
     boolean old1 = prevStates[0];
     if (state1 && !old1) {
@@ -91,20 +115,13 @@ boolean GoalAnalyzer::findCascades(boolean state1, boolean state2) {
     return found;
 }
 
-void GoalAnalyzer::registerCascade(int number, int event) {
-    if (event == FRONT_UP) {
-        if (enablingOrder[0] == 0) {
-            enablingOrder[0] = number;
-        } else {
-            enablingOrder[1] = number;
-        }
-    } else {
-        if (disablingOrder[0] == 0) {
-            disablingOrder[0] = number;
-        } else {
-            disablingOrder[1] = number;
-        }
-    }
+void GoalAnalyzer::registerCascade(byte number, byte type) {
+    Event *event = new Event;
+    event->detectorNumber = number;
+    event->type = type;
+    event->time = millis();
+    events[index] = event;
+    index = (index + 1) % 4;
 }
 
 //-------Display-------
@@ -148,34 +165,32 @@ ButtonPanel::ButtonPanel(int pin) {
     this->pin = pin;
 }
 
-int ButtonPanel::getKeyValue() {         // Функция устраняющая дребезг
+int ButtonPanel::getKeyValue() {
     static int count;
-    static int oldKeyValue; // Переменная для хранения предыдущего значения состояния кнопок
+    static int oldKeyValue;
     static int innerKeyValue;
+    
+    int actualKeyValue = getButtonNumberByValue(analogRead(pin));
 
-    // Здесь уже не можем использовать значение АЦП, так как оно постоянно меняется в силу погрешности
-    int actualKeyValue = getButtonNumberByValue(analogRead(pin)); // Преобразовываем его в номер кнопки, тем самым убирая погрешность
-
-    if (innerKeyValue != actualKeyValue) { // Пришло значение отличное от предыдущего
-        count = 0;                     // Все обнуляем и начинаем считать заново
-        innerKeyValue = actualKeyValue;       // Запоминаем новое значение
+    if (innerKeyValue != actualKeyValue) {
+        count = 0;
+        innerKeyValue = actualKeyValue;
     } else {
-        count += 1;                           // Увеличиваем счетчик
+        count += 1;
     }
 
     if ((count >= 5) && (actualKeyValue != oldKeyValue)) {
-        oldKeyValue = actualKeyValue;         // Запоминаем новое значение
+        oldKeyValue = actualKeyValue;
     }
     return oldKeyValue;
 }
 
-int ButtonPanel::getButtonNumberByValue(int value) { // Новая функция по преобразованию кода нажатой кнопки в её номер
+int ButtonPanel::getButtonNumberByValue(int value) {
     for (int i = 0; i <= 3; i++) {
-        // Если значение в заданном диапазоне values[i]+/-error - считаем, что кнопка определена
         if (value <= values[i] + error && value >= values[i] - error)
             return i;
     }
-    return -1;                    // Значение не принадлежит заданному диапазону
+    return -1;
 }
 
 // Beeper

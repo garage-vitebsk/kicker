@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "kicker.h"
 
+#define DEBUG true
+
 const int SPEAKER_PIN = 13;
 
 int segments[7] = { 2, 3, 4, 5, 6, 7, 8 };
@@ -141,4 +143,3 @@ void loop() {
         }
     }
 }
-
