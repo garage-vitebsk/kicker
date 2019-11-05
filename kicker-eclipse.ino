@@ -5,9 +5,9 @@
 
 const int SPEAKER_PIN = 13;
 
-int segments[7] = { 2, 3, 4, 5, 6, 7, 8 };
-Display display1 = Display(9, segments);
-Display display2 = Display(10, segments);
+int segments[7] = { 2, 3, 4};
+Display display1 = Display(segments);
+Display display2 = Display(segments);
 
 BallDetector detector1 = BallDetector(11);
 BallDetector detector2 = BallDetector(12);
@@ -34,12 +34,12 @@ boolean win = false;
 boolean goal = false;
 
 void showScore() {
-    display2.setEnabled(false);
-    display1.setEnabled(true);
+//    display2.setEnabled(false);
+//    display1.setEnabled(true);
     display1.writeDigit(digit1);
     delay(10);
-    display1.setEnabled(false);
-    display2.setEnabled(true);
+//    display1.setEnabled(false);
+//    display2.setEnabled(true);
     display2.writeDigit(digit2);
     delay(10);
 }
@@ -48,7 +48,7 @@ void restartGame() {
     win = false;
     digit1 = 0;
     digit2 = 0;
-    display1.setBlinkMode(false);
+//    display1.setBlinkMode(false);
 }
 
 void checkButtons() {
@@ -126,7 +126,7 @@ void setup() {
 
 void loop() {
     while (win) {
-        display1.setBlinkMode(true);
+//        display1.setBlinkMode(true);
         checkButtons();
         showScore();
     }

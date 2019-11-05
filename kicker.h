@@ -34,33 +34,32 @@ class GoalAnalyzer {
 // Indicator
 class Display {
     public:
-        Display(int powerPin, int *segmentPins);
+        Display(int *segmentPins);
 
         void writeDigit(int digit);
         void writeDigit(boolean *segmentValues);
-        void setEnabled(boolean enabled);
-        void setBlinkMode(bool enabled);
+//        void setEnabled(boolean enabled);
+//        void setBlinkMode(bool enabled);
 
     private:
         int *segmentPins;
-        int powerPin;
-        bool blinkMode = false;
-        unsigned long nextSwitchTime = 0;
-        bool state = false;
-        int blinkDelay = 300;
+//        bool blinkMode = false;
+//        unsigned long nextSwitchTime = 0;
+//        bool state = false;
+//        int blinkDelay = 300;
 
         //@formatter:off
-        boolean digits[10][7] = {
-                { true,  true,  true,  true,  true,  true,  false }, // 0
-                { false, true,  true,  false, false, false, false }, // 1
-                { true,  true,  false, true,  true,  false, true  }, // 2
-                { true,  true,  true,  true,  false, false, true  }, // 3
-                { false, true,  true,  false, false, true,  true  }, // 4
-                { true,  false, true,  true,  false, true,  true  }, // 5
-                { true,  false, true,  true,  true,  true,  true  }, // 6
-                { true,  true,  true,  false, false, false, false }, // 7
-                { true,  true,  true,  true,  true,  true,  true  }, // 8
-                { true,  true,  true,  true,  false, true,  true  }, // 9
+        boolean digits[10][4] = {
+                { true,  true,  true,  true    }, // 0
+                { false, true,  true,  true    }, // 1
+                { true,  false,  true, true    }, // 2
+                { false,  false,  true,  true  }, // 3
+                { true, true,  false,  true    }, // 4
+                { false,  true, false,  true   }, // 5
+                { true,  false, false,  true   }, // 6
+                { false,  false,  false,  true }, // 7
+                { true,  true,  true,  false   }, // 8
+                { false,  true,  true,  false  }, // 9
         };
         //@formatter:on
 };

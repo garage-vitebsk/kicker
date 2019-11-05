@@ -55,7 +55,7 @@ boolean GoalAnalyzer::accumulate(boolean state1, boolean state2) {
         }
       }
     }
-    bool goal = (up2 - up1 < 500) && (down1 - up1 < 500);
+    bool goal = (up2 - up1 < 500) && (down1 - up1 < 500)&& (up2 - down1 < 500);
     if (goal) {
       index = 0;
       for (int i = 0; i < 4; i++) {
@@ -125,11 +125,8 @@ void GoalAnalyzer::registerCascade(byte number, byte type) {
 }
 
 //-------Display-------
-Display::Display(int powerPin, int *segmentPins) {
-    this->powerPin = powerPin;
-    pinMode(powerPin, OUTPUT);
-    this->segmentPins = segmentPins;
-    for (int i = 0; i < 7; i++) {
+Display::Display(int *segmentPins) {
+    for (int i = 0; i < 4; i++) {
         pinMode(segmentPins[i], OUTPUT);
     }
 }
@@ -139,26 +136,26 @@ void Display::writeDigit(int digit) {
 }
 
 void Display::writeDigit(boolean *segmentValues) {
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 4; i++) {
         digitalWrite(segmentPins[i], segmentValues[i]);
     }
 }
 
-void Display::setEnabled(boolean enabled) {
-    unsigned long currentTime = millis();
-    if (blinkMode && currentTime > nextSwitchTime) {
-        state = enabled;
-        nextSwitchTime = currentTime + blinkDelay;
-        digitalWrite(powerPin, !enabled);
-    }
-    if (!blinkMode || state) {
-        digitalWrite(powerPin, !enabled);
-    }
-}
+//void Display::setEnabled(boolean enabled) {
+//    unsigned long currentTime = millis();
+//    if (blinkMode && currentTime > nextSwitchTime) {
+//        state = enabled;
+//        nextSwitchTime = currentTime + blinkDelay;
+//        digitalWrite(powerPin, !enabled);
+//    }
+//    if (!blinkMode || state) {
+//        digitalWrite(powerPin, !enabled);
+//    }
+//}
 
-void Display::setBlinkMode(bool mode) {
-    blinkMode = mode;
-}
+//void Display::setBlinkMode(bool mode) {
+//    blinkMode = mode;
+//}
 
 // ButtonPanel
 ButtonPanel::ButtonPanel(int pin) {
