@@ -38,42 +38,35 @@ class Display {
 
         void writeDigit(int digit);
         void writeDigit(boolean *segmentValues);
-//        void setEnabled(boolean enabled);
-//        void setBlinkMode(bool enabled);
 
     private:
         int *segmentPins;
-//        bool blinkMode = false;
-//        unsigned long nextSwitchTime = 0;
-//        bool state = false;
-//        int blinkDelay = 300;
 
         //@formatter:off
         boolean digits[10][4] = {
-                { true,  true,  true,  true    }, // 0
-                { false, true,  true,  true    }, // 1
-                { true,  false,  true, true    }, // 2
-                { false,  false,  true,  true  }, // 3
-                { true, true,  false,  true    }, // 4
-                { false,  true, false,  true   }, // 5
-                { true,  false, false,  true   }, // 6
-                { false,  false,  false,  true }, // 7
-                { true,  true,  true,  false   }, // 8
-                { false,  true,  true,  false  }, // 9
+                { true,  true,  true,  true  }, // 0
+                { false, true,  true,  true  }, // 1
+                { true,  false, true,  true  }, // 2
+                { false, false, true,  true  }, // 3
+                { true,  true,  false, true  }, // 4
+                { false, true,  false, true  }, // 5
+                { true,  false, false, true  }, // 6
+                { false, false, false, true  }, // 7
+                { true,  true,  true,  false }, // 8
+                { false, true,  true,  false }, // 9
         };
         //@formatter:on
 };
 
-class ButtonPanel {
+class Button {
+    #define PRESS_THRESHOLD 100
     public:
-        ButtonPanel(int pin);
-        int getKeyValue();
+        Button(int pin);
+        boolean readButton();
     private:
+        boolean prevState;
+        long prevPressedTime;
         int pin;
-        int getButtonNumberByValue(int value);
-        int values[4] = { 0, 615, 769, 1023 };
-        int error = 15;
-
 };
 
 class Beeper {

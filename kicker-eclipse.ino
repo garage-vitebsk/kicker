@@ -5,7 +5,7 @@
 
 const int SPEAKER_PIN = 13;
 
-int segments[7] = { 2, 3, 4};
+int segments[7] = { 4, 5, 6, 7};
 Display display1 = Display(segments);
 Display display2 = Display(segments);
 
@@ -13,7 +13,8 @@ BallDetector detector1 = BallDetector(11);
 BallDetector detector2 = BallDetector(12);
 
 GoalAnalyzer analyzer = GoalAnalyzer();
-ButtonPanel buttons = ButtonPanel(0);
+Button buttonIncrement = Button(2);
+Button buttonDecrement = Button(3);
 
 int note1[] = { 1568, 150 };
 int note2[] = { 1480, 150 };
@@ -34,112 +35,106 @@ boolean win = false;
 boolean goal = false;
 
 void showScore() {
-//    display2.setEnabled(false);
-//    display1.setEnabled(true);
-    display1.writeDigit(digit1);
-    delay(10);
-//    display1.setEnabled(false);
-//    display2.setEnabled(true);
-    display2.writeDigit(digit2);
-    delay(10);
+  //    display2.setEnabled(false);
+  //    display1.setEnabled(true);
+  display1.writeDigit(digit1);
+  delay(10);
+  //    display1.setEnabled(false);
+  //    display2.setEnabled(true);
+  display2.writeDigit(digit2);
+  delay(10);
 }
 
 void restartGame() {
-    win = false;
-    digit1 = 0;
-    digit2 = 0;
-//    display1.setBlinkMode(false);
+  win = false;
+  digit1 = 0;
+  digit2 = 0;
+  //    display1.setBlinkMode(false);
 }
 
+//TODO rework for new buttons logic
 void checkButtons() {
-    int pressed = buttons.getKeyValue();
-    if (pressed != prevPressed) {
-        Serial.println(pressed);
-        switch (pressed) {
-        case 1:
-            if (digit1 >= 9) {
-                win = true;
-            } else if (!win) {
-                digit1++;
-            }
-            break;
-        case 2:
-            if (digit2 >= 9) {
-                win = true;
-            } else if (!win) {
-                digit2++;
-            }
-            break;
-        case 3:
-            restartGame();
-            break;
-        }
-        prevPressed = pressed;
+  int incPressed = buttonIncrement.readButton();
+  int decPressed = buttonDecrement.readButton();
+  if (incPressed && decPressed) {
+    restartGame();
+  } else if (incPressed) {
+    if (digit1 >= 9) {
+      win = true;
+    } else if (!win) {
+      digit1++;
     }
+  } else if (decPressed) {
+    if (digit2 >= 9) {
+      win = true;
+    } else if (!win) {
+      digit2++;
+    }
+  }
 }
 
 void activeDelay() {
-    do {
-        checkButtons();
-        showScore();
-        beeper.work();
-        goal = analyzer.accumulate(detector1.getState(), detector2.getState());
-    } while (!(goal || win));
+  do {
+    checkButtons();
+    showScore();
+    beeper.work();
+    goal = analyzer.accumulate(detector1.getState(), detector2.getState());
+  } while (!(goal || win));
 }
 
 void goalBeeper() {
-    beeper.work();
-//    unsigned long tone_time = millis();
-//    for (int i = 0; i < GOAL_NOTES; i++) {
-//        while (tone_time + GOAL_NOTES[i][2] < millis()) {
-//            tone(SPEAKER_PIN, GOAL_NOTES[i][1], GOAL_NOTES[i][2]);
-//            showScore();
-//        }
-//    }
-//    tone(SPEAKER_PIN, 1568, 150);
-//    delay(150);
-//    tone(SPEAKER_PIN, 1480, 150);
-//    delay(150);
-//    tone(SPEAKER_PIN, 1396, 150);
-//    delay(150);
-//    tone(SPEAKER_PIN, 1244, 300);
-//    delay(300);
-//    tone(SPEAKER_PIN, 1318, 150);
-//    delay(300);
-//    tone(SPEAKER_PIN, 830, 150);
-//    delay(150);
-//    tone(SPEAKER_PIN, 880, 150);
-//    delay(150);
-//    tone(SPEAKER_PIN, 1046, 150);
-//    delay(300);
-//    tone(SPEAKER_PIN, 880, 150);
-//    delay(150);
-//    tone(SPEAKER_PIN, 1046, 150);
-//    delay(150);
-//    tone(SPEAKER_PIN, 1174, 150);
-//    delay(150);
+  beeper.work();
+  //    unsigned long tone_time = millis();
+  //    for (int i = 0; i < GOAL_NOTES; i++) {
+  //        while (tone_time + GOAL_NOTES[i][2] < millis()) {
+  //            tone(SPEAKER_PIN, GOAL_NOTES[i][1], GOAL_NOTES[i][2]);
+  //            showScore();
+  //        }
+  //    }
+  //    tone(SPEAKER_PIN, 1568, 150);
+  //    delay(150);
+  //    tone(SPEAKER_PIN, 1480, 150);
+  //    delay(150);
+  //    tone(SPEAKER_PIN, 1396, 150);
+  //    delay(150);
+  //    tone(SPEAKER_PIN, 1244, 300);
+  //    delay(300);
+  //    tone(SPEAKER_PIN, 1318, 150);
+  //    delay(300);
+  //    tone(SPEAKER_PIN, 830, 150);
+  //    delay(150);
+  //    tone(SPEAKER_PIN, 880, 150);
+  //    delay(150);
+  //    tone(SPEAKER_PIN, 1046, 150);
+  //    delay(300);
+  //    tone(SPEAKER_PIN, 880, 150);
+  //    delay(150);
+  //    tone(SPEAKER_PIN, 1046, 150);
+  //    delay(150);
+  //    tone(SPEAKER_PIN, 1174, 150);
+  //    delay(150);
 }
 
 void setup() {
-    Serial.begin(9600);
+  Serial.begin(9600);
 }
 
 void loop() {
-    while (win) {
-//        display1.setBlinkMode(true);
-        checkButtons();
-        showScore();
+  while (win) {
+    //        display1.setBlinkMode(true);
+    checkButtons();
+    showScore();
+  }
+  activeDelay();
+  if (goal) {
+    goal = false;
+    if (digit1 >= 9) {
+      digit1 = 0;
+      win = true;
+    } else {
+      beeper.setPlay(true);
+      goalBeeper();
+      digit1++;
     }
-    activeDelay();
-    if (goal) {
-        goal = false;
-        if (digit1 >= 9) {
-            digit1 = 0;
-            win = true;
-        } else {
-            beeper.setPlay(true);
-            goalBeeper();
-            digit1++;
-        }
-    }
+  }
 }

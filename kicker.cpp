@@ -141,53 +141,26 @@ void Display::writeDigit(boolean *segmentValues) {
     }
 }
 
-//void Display::setEnabled(boolean enabled) {
-//    unsigned long currentTime = millis();
-//    if (blinkMode && currentTime > nextSwitchTime) {
-//        state = enabled;
-//        nextSwitchTime = currentTime + blinkDelay;
-//        digitalWrite(powerPin, !enabled);
-//    }
-//    if (!blinkMode || state) {
-//        digitalWrite(powerPin, !enabled);
-//    }
-//}
-
-//void Display::setBlinkMode(bool mode) {
-//    blinkMode = mode;
-//}
-
 // ButtonPanel
-ButtonPanel::ButtonPanel(int pin) {
+Button::Button(int pin) {
     this->pin = pin;
+    prevPressedTime = millis();
+    pinMode(pin, INPUT);
 }
 
-int ButtonPanel::getKeyValue() {
-    static int count;
-    static int oldKeyValue;
-    static int innerKeyValue;
-    
-    int actualKeyValue = getButtonNumberByValue(analogRead(pin));
-
-    if (innerKeyValue != actualKeyValue) {
-        count = 0;
-        innerKeyValue = actualKeyValue;
-    } else {
-        count += 1;
+boolean Button::readButton(){
+  boolean state = digitalRead(pin);
+  Serial.println(state);
+  if (state && !prevState) {
+    long pressedTime = millis();
+    if (pressedTime - prevPressedTime > PRESS_THRESHOLD) {
+      prevPressedTime = pressedTime;
+      prevState = state;
+      return true;
     }
-
-    if ((count >= 5) && (actualKeyValue != oldKeyValue)) {
-        oldKeyValue = actualKeyValue;
-    }
-    return oldKeyValue;
-}
-
-int ButtonPanel::getButtonNumberByValue(int value) {
-    for (int i = 0; i <= 3; i++) {
-        if (value <= values[i] + error && value >= values[i] - error)
-            return i;
-    }
-    return -1;
+  }
+  prevState = state;
+  return false;
 }
 
 // Beeper
