@@ -43,17 +43,17 @@ class Display {
         int *segmentPins;
 
         //@formatter:off
-        boolean digits[10][4] = {
-                { true,  true,  true,  true  }, // 0
-                { false, true,  true,  true  }, // 1
-                { true,  false, true,  true  }, // 2
-                { false, false, true,  true  }, // 3
-                { true,  true,  false, true  }, // 4
-                { false, true,  false, true  }, // 5
-                { true,  false, false, true  }, // 6
-                { false, false, false, true  }, // 7
-                { true,  true,  true,  false }, // 8
-                { false, true,  true,  false }, // 9
+         boolean digits[10][4] = {
+                { false, false, false, false  }, // 0
+                { true,  false, false, false  }, // 1
+                { false, true,  false, false  }, // 2
+                { true,  true,  false, false  }, // 3
+                { false, false, true,  false  }, // 4
+                { true,  false, true,  false  }, // 5
+                { false, true,  true,  false  }, // 6
+                { true,  true,  true,  false  }, // 7
+                { false, false, false, true   }, // 8
+                { true,  false, false, true   }, // 9
         };
         //@formatter:on
 };
@@ -64,14 +64,14 @@ class Button {
         Button(int pin);
         boolean readButton();
     private:
-        boolean prevState;
+        boolean prevState = false;
         long prevPressedTime;
         int pin;
 };
 
 class Beeper {
     public:
-        Beeper(int pin, int *tones[], int tonesLength);
+        Beeper(int pin, int tonesLength, int  *tones[]);
         void setPlay(bool play);
         void work();
     private:
@@ -81,6 +81,19 @@ class Beeper {
         unsigned long nextSwichTime = 0;
         int currentTone = 0;
         bool play = false;
+};
+
+class Player {
+  public:
+    byte number;
+    Display *display;
+    BallDetector *detector1;
+    BallDetector *detector2;
+    Button *increment;
+    Button *decrement;
+    byte score;
+
+    Player(byte number, Display *display, BallDetector *detector1, BallDetector *detector2, Button *increment, Button *decrement);
 };
 
 int sign(int number);

@@ -3,116 +3,89 @@
 
 #define DEBUG true
 
-const int SPEAKER_PIN = 13;
-
-int segments[7] = { 4, 5, 6, 7};
-Display display1 = Display(segments);
-Display display2 = Display(segments);
-
-BallDetector detector1 = BallDetector(11);
-BallDetector detector2 = BallDetector(12);
-
 GoalAnalyzer analyzer = GoalAnalyzer();
-Button buttonIncrement = Button(2);
-Button buttonDecrement = Button(3);
 
-int note1[] = { 1568, 150 };
-int note2[] = { 1480, 150 };
-int note3[] = { 1396, 150 };
-int note4[] = { 1244, 300 };
+Player player1 = Player(1,
+                        new Display(new int[4] {4, 5, 6, 7}),
+                        new BallDetector(9),
+                        new BallDetector(10),
+                        new Button(2),
+                        new Button(3)
+                       );
 
-int *notes[] = { note1, note2, note3, note4 };
-//int **GOAL_NOTES = {, , , ,
-//    {   1318, 300}, {830, 150}, {880, 150}, {1046, 300}, {880, 150},
-//    {   1046, 150}, {1174, 150}};
-Beeper beeper = Beeper(13, notes, 4);
+// player 2
+//int segments2[4] = { 19, 18, 17, 16};
+//Display display2 = Display(segments2);
+//BallDetector detector21 = BallDetector(11);
+//BallDetector detector22 = BallDetector(12);
+//Button increment2 = Button(14);
+//Button decrement2 = Button(15);
 
-int digit1, digit2;
-boolean enter1, enter2;
-boolean prev1, prev2;
-int prevPressed = 0;
+int goalTones1[] = { 1568, 150 };
+int goalTones2[] = { 1480, 150 };
+int goalTones3[] = { 1396, 150 };
+int goalTones4[] = { 1244, 300 };
+int *goalTones[] = { goalTones1, goalTones2, goalTones3, goalTones4 };
+Beeper goalBeeper = Beeper(8, 4, goalTones);
+int winTones1[] = { 1568, 150 };
+int winTones2[] = { 1480, 150 };
+int winTones3[] = { 1396, 150 };
+int winTones4[] = { 1244, 500 };
+int winTones5[] = { 1318, 150 };
+int winTones6[] = { 830,  300 };
+int winTones7[] = { 880, 150  };
+int winTones8[] = { 1046, 150 };
+int winTones9[] = { 880, 300 };
+int winTones10[] = { 1046, 150 };
+int winTones11[] = { 1174, 150 };
+int *winTones[] = {winTones1, winTones2, winTones3, winTones4,winTones5,winTones6,winTones7,winTones8,winTones9,winTones10,winTones11};
+Beeper winBeeper = Beeper(8, 11, winTones);
+
 boolean win = false;
 boolean goal = false;
 
 void showScore() {
-  //    display2.setEnabled(false);
-  //    display1.setEnabled(true);
-  display1.writeDigit(digit1);
-  delay(10);
-  //    display1.setEnabled(false);
-  //    display2.setEnabled(true);
-  display2.writeDigit(digit2);
-  delay(10);
+  player1.display->writeDigit(player1.score);
+  //  display2.writeDigit(digit1);
 }
 
 void restartGame() {
   win = false;
-  digit1 = 0;
-  digit2 = 0;
+  player1.score = 0;
   //    display1.setBlinkMode(false);
 }
 
-//TODO rework for new buttons logic
-void checkButtons() {
-  int incPressed = buttonIncrement.readButton();
-  int decPressed = buttonDecrement.readButton();
+void checkButtons(Player player) {
+  boolean incPressed = player.increment->readButton();
+  boolean decPressed = player.decrement->readButton();
   if (incPressed && decPressed) {
+#if DEBUG
+    Serial.print("Game was restarted by player ");
+    Serial.println(player.number);
+#endif
     restartGame();
-  } else if (incPressed) {
-    if (digit1 >= 9) {
-      win = true;
-    } else if (!win) {
-      digit1++;
-    }
-  } else if (decPressed) {
-    if (digit2 >= 9) {
-      win = true;
-    } else if (!win) {
-      digit2++;
-    }
+  } else if (incPressed && player1.score < 9 && !win) {
+#if DEBUG
+    Serial.print("Score was increased by player ");
+    Serial.println(player.number);
+#endif
+    player1.score++;
+  } else if (decPressed && player1.score > 0 && !win) {
+#if DEBUG
+    Serial.print("Score was dereased by player ");
+    Serial.println(player.number);
+#endif
+    player1.score--;
   }
 }
 
 void activeDelay() {
   do {
-    checkButtons();
+    checkButtons(player1);
     showScore();
-    beeper.work();
-    goal = analyzer.accumulate(detector1.getState(), detector2.getState());
+    goalBeeper.work();
+    goal = analyzer.accumulate(player1.detector1->getState(), player1.detector2->getState());
   } while (!(goal || win));
-}
-
-void goalBeeper() {
-  beeper.work();
-  //    unsigned long tone_time = millis();
-  //    for (int i = 0; i < GOAL_NOTES; i++) {
-  //        while (tone_time + GOAL_NOTES[i][2] < millis()) {
-  //            tone(SPEAKER_PIN, GOAL_NOTES[i][1], GOAL_NOTES[i][2]);
-  //            showScore();
-  //        }
-  //    }
-  //    tone(SPEAKER_PIN, 1568, 150);
-  //    delay(150);
-  //    tone(SPEAKER_PIN, 1480, 150);
-  //    delay(150);
-  //    tone(SPEAKER_PIN, 1396, 150);
-  //    delay(150);
-  //    tone(SPEAKER_PIN, 1244, 300);
-  //    delay(300);
-  //    tone(SPEAKER_PIN, 1318, 150);
-  //    delay(300);
-  //    tone(SPEAKER_PIN, 830, 150);
-  //    delay(150);
-  //    tone(SPEAKER_PIN, 880, 150);
-  //    delay(150);
-  //    tone(SPEAKER_PIN, 1046, 150);
-  //    delay(300);
-  //    tone(SPEAKER_PIN, 880, 150);
-  //    delay(150);
-  //    tone(SPEAKER_PIN, 1046, 150);
-  //    delay(150);
-  //    tone(SPEAKER_PIN, 1174, 150);
-  //    delay(150);
 }
 
 void setup() {
@@ -121,20 +94,20 @@ void setup() {
 
 void loop() {
   while (win) {
-    //        display1.setBlinkMode(true);
-    checkButtons();
+    //    display1.setBlinkMode(true);
+    winBeeper.work();
+    checkButtons(player1);
     showScore();
   }
   activeDelay();
   if (goal) {
     goal = false;
-    if (digit1 >= 9) {
-      digit1 = 0;
+    if (player1.score >= 9) {
       win = true;
+      winBeeper.setPlay(true);
     } else {
-      beeper.setPlay(true);
-      goalBeeper();
-      digit1++;
+      goalBeeper.setPlay(true);
+      player1.score++;
     }
   }
 }
