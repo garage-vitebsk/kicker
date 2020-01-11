@@ -1,7 +1,5 @@
 #include "kicker.h"
 
-bool isDebug = false;
-
 //-------BallDetector-------
 
 BallDetector::BallDetector(int pin) {
@@ -14,11 +12,15 @@ boolean BallDetector::getState() {
 }
 
 //-------GoalAnalyzer-------
-GoalAnalyzer::GoalAnalyzer() {
+GoalAnalyzer::GoalAnalyzer(BallDetector *detector1, BallDetector *detector2) {
+  this->detector1 = detector1;
+  this->detector2 = detector2;
   triggerTime = millis();
 }
 
-boolean GoalAnalyzer::accumulate(boolean state1, boolean state2) {
+boolean GoalAnalyzer::accumulate() {
+  boolean state1 = detector1->getState();
+  boolean state2 = detector2->getState();
   if (!findCascades(state1, state2)) {
     return false;
   }
@@ -170,7 +172,7 @@ boolean Button::readButton() {
 }
 
 // Beeper
-Beeper::Beeper(int pin, int tonesLength, int *tones[2]) {
+Beeper::Beeper(int pin, int tonesLength, int **tones) {
   this->pin = pin;
   this->tones = tones;
   this->tonesLength = tonesLength;
@@ -201,13 +203,61 @@ void Beeper::work() {
 Player::Player(byte number, Display *display, BallDetector *detector1, BallDetector *detector2, Button *increment, Button *decrement) {
   this->number = number;
   this->display = display;
-  this->detector1 = detector1;
-  this->detector2 = detector2;
   this->increment = increment;
   this->decrement = decrement;
   this->score = 0;
+  this->restartPressed = false;
+  this->analyzer = new GoalAnalyzer(detector1, detector2);
 }
 
+void Player::showScore() {
+  display->writeDigit(score);
+}
+
+void Player::checkButtons() {
+  boolean incPressed = increment->readButton();
+  boolean decPressed = decrement->readButton();
+  if (incPressed && decPressed) {
+#if DEBUG
+    Serial.print("Game was restarted by player ");
+    Serial.println(player.number);
+#endif
+    restartPressed = true;
+  } else if (incPressed && score < 9) {
+#if DEBUG
+    Serial.print("Score was increased by player ");
+    Serial.println(number);
+#endif
+    score++;
+  } else if (decPressed && score > 0) {
+#if DEBUG
+    Serial.print("Score was dereased by player ");
+    Serial.println(number);
+#endif
+    score--;
+  }
+}
+
+boolean Player::checkGoal() {
+  boolean goal = analyzer->accumulate();
+  if (goal) {
+    score++;
+  }
+  return goal;
+}
+
+void Player::restart() {
+  restartPressed = false;
+  score = 0;
+}
+
+boolean Player::isWon() {
+  return score >= 10;
+}
+
+boolean Player::isRestartPressed() {
+  return restartPressed;
+}
 //-----other functions-----
 int sign(int number) {
   if (number < 0) {
