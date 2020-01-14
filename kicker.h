@@ -11,15 +11,17 @@ class BallDetector {
 };
 
 class GoalAnalyzer {
+#define GOAL_THRESHOLD 500
+#define FRONT_UP 1  
+#define FRONT_DOWN 2
   public:
     GoalAnalyzer(BallDetector *detector1, BallDetector *detector2);
     bool accumulate();
   private:
-    static const byte FRONT_UP = 1;
-    static const byte FRONT_DOWN = 2;
-
     bool prevStates[2] = { false, false };
     byte index = 0;
+    long goalTime;
+    
     BallDetector *detector1;
     BallDetector *detector2;
 
@@ -60,11 +62,16 @@ class Display {
 
 class Button {
 #define PRESS_THRESHOLD 100
+#define HOLD_THRESHOLD 1000
   public:
     Button(int pin);
-    boolean readButton();
+    void work();
+    boolean isPressed();
+    boolean isHold();
   private:
+    boolean state = false;
     boolean prevState = false;
+    long pressedTime;
     long prevPressedTime;
     int pin;
 };
@@ -92,6 +99,7 @@ class Player {
     byte score;
     boolean restartPressed;
     GoalAnalyzer *analyzer;
+    boolean buttonsBlocked;
 
   public:
     Player(byte number, Display *display, BallDetector *detector1, BallDetector *detector2, Button *increment, Button *decrement);
@@ -102,6 +110,7 @@ class Player {
     void restart();
     boolean isWon();
     boolean isRestartPressed();
+    void blockButtons();
 };
 
 int sign(int number);

@@ -71,6 +71,8 @@ void loop() {
     if (goal1 || goal2) {
       if (player1.isWon() || player2.isWon()) {
         win = true;
+        player1.blockButtons();
+        player2.blockButtons();
         winBeeper.setPlay(true);
       } else {
         goalBeeper.setPlay(true);

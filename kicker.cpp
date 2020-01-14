@@ -16,6 +16,7 @@ GoalAnalyzer::GoalAnalyzer(BallDetector *detector1, BallDetector *detector2) {
   this->detector1 = detector1;
   this->detector2 = detector2;
   triggerTime = millis();
+  goalTime = millis();
 }
 
 boolean GoalAnalyzer::accumulate() {
@@ -64,6 +65,10 @@ boolean GoalAnalyzer::accumulate() {
       delete events[i];
       events[i] = NULL;
     }
+//    long curTime = millis();
+//    long timeSinceLastGoal = curTime - goalTime;
+//    goalTime = curTime;
+//    return timeSinceLastGoal > GOAL_THRESHOLD;
   }
   return goal;
   //    if (enablingOrder[0] == 1 && enablingOrder[1] == 2 && disablingOrder[0] == 1
@@ -153,22 +158,27 @@ void Display::writeDigit(boolean *segmentValues) {
 // ButtonPanel
 Button::Button(int pin) {
   this->pin = pin;
-  prevPressedTime = millis();
+  pressedTime = millis();
   pinMode(pin, INPUT);
 }
 
-boolean Button::readButton() {
-  boolean state = digitalRead(pin);
-  if (state && !prevState) {
-    long pressedTime = millis();
-    if (pressedTime - prevPressedTime > PRESS_THRESHOLD) {
-      prevPressedTime = pressedTime;
-      prevState = state;
-      return true;
-    }
-  }
+void Button::work() {
+//  delay(100);
   prevState = state;
-  return false;
+  state = digitalRead(pin);
+  if (state && !prevState) {
+    pressedTime = millis();
+  }
+}
+
+boolean Button::isPressed() {
+  long pressTimeDif = pressedTime - prevPressedTime;
+  prevPressedTime = pressedTime;
+  return state && !prevState && pressTimeDif > PRESS_THRESHOLD;
+}
+
+boolean Button::isHold() {
+  return state && millis() - pressedTime > HOLD_THRESHOLD;
 }
 
 // Beeper
@@ -215,21 +225,21 @@ void Player::showScore() {
 }
 
 void Player::checkButtons() {
-  boolean incPressed = increment->readButton();
-  boolean decPressed = decrement->readButton();
-  if (incPressed && decPressed) {
+  increment->work();
+  decrement->work();
+  if (increment->isHold() || decrement->isHold()) {
 #if DEBUG
     Serial.print("Game was restarted by player ");
     Serial.println(player.number);
 #endif
     restartPressed = true;
-  } else if (incPressed && score < 9) {
+  } else if (increment->isPressed() && score < 9 && !buttonsBlocked) {
 #if DEBUG
     Serial.print("Score was increased by player ");
     Serial.println(number);
 #endif
     score++;
-  } else if (decPressed && score > 0) {
+  } else if (decrement->isPressed() && score > 0 && !buttonsBlocked) {
 #if DEBUG
     Serial.print("Score was dereased by player ");
     Serial.println(number);
@@ -248,6 +258,7 @@ boolean Player::checkGoal() {
 
 void Player::restart() {
   restartPressed = false;
+  buttonsBlocked = false;
   score = 0;
 }
 
@@ -257,6 +268,10 @@ boolean Player::isWon() {
 
 boolean Player::isRestartPressed() {
   return restartPressed;
+}
+
+void Player::blockButtons() {
+  buttonsBlocked = true;
 }
 //-----other functions-----
 int sign(int number) {
