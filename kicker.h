@@ -11,8 +11,8 @@ class BallDetector {
 };
 
 class GoalAnalyzer {
-#define GOAL_THRESHOLD 500
-#define FRONT_UP 1  
+#define GOAL_THRESHOLD 2000
+#define FRONT_UP 1
 #define FRONT_DOWN 2
   public:
     GoalAnalyzer(BallDetector *detector1, BallDetector *detector2);
@@ -21,7 +21,7 @@ class GoalAnalyzer {
     bool prevStates[2] = { false, false };
     byte index = 0;
     long goalTime;
-    
+
     BallDetector *detector1;
     BallDetector *detector2;
 

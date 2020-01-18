@@ -1,5 +1,7 @@
 #include "kicker.h"
 
+#define DEBUG true
+
 //-------BallDetector-------
 
 BallDetector::BallDetector(int pin) {
@@ -17,6 +19,9 @@ GoalAnalyzer::GoalAnalyzer(BallDetector *detector1, BallDetector *detector2) {
   this->detector2 = detector2;
   triggerTime = millis();
   goalTime = millis();
+  for (int i = 0; i < 4; i++) {
+    events[i] = NULL;
+  }
 }
 
 boolean GoalAnalyzer::accumulate() {
@@ -29,77 +34,84 @@ boolean GoalAnalyzer::accumulate() {
   prevStates[0] = state1;
   prevStates[1] = state2;
 
-#if DEBUG
-  Serial.println("---------enablingOrder---------");
-  for (int i = 0; i < 2; i++) {
-    Serial.println(enablingOrder[i]);
-  }
-
-  Serial.println("--------disablingOrder----------");
-  for (int i = 0; i < 2; i++) {
-    Serial.println(disablingOrder[i]);
-  }
-  Serial.println("-------------------------------------------");
-#endif
   long up1 = 0;
   long up2 = 0;
   long down1 = 0;
+#if DEBUG
+  Serial.print("AnazierState:");
+#endif
   for (int i = 0; i < 4; i++) {
-    Event *event = events[(index - i) % 4];
-    if (event->detectorNumber == 1) {
-      if (event->type == FRONT_UP) {
-        up1 = event->time;
+    Event *event = events[(i + index + 1) % 4];
+#if DEBUG
+    Serial.print("[index=");
+    Serial.print((i + index + 1) % 4);
+    Serial.print(",&");
+    Serial.print((unsigned)event);
+#endif
+    if (event != NULL) {
+#if DEBUG
+      Serial.print(",number=");
+      Serial.print(event->detectorNumber);
+      Serial.print(",type=");
+      Serial.print(event->type == FRONT_UP ? "FRONT_UP" : "FRONT_DOWN");
+      Serial.print(",time=");
+      Serial.print(event->time);
+#endif
+      if (event->detectorNumber == 1) {
+        if (event->type == FRONT_UP) {
+          up1 = event->time;
+        } else {
+          down1 = event->time;
+        }
       } else {
-        down1 = event->time;
-      }
-    } else {
-      if (event->type == FRONT_UP) {
-        up2 = event->time;
+        if (event->type == FRONT_UP) {
+          up2 = event->time;
+        }
       }
     }
+#if DEBUG
+    Serial.print("]");
+#endif
   }
+#if DEBUG
+  Serial.println();
+#endif
   bool goal = (up2 - up1 < 500) && (down1 - up1 < 500) && (up2 - down1 < 500);
   if (goal) {
     index = 0;
+#if DEBUG
+    Serial.print("deleting:");
+#endif
     for (int i = 0; i < 4; i++) {
-      delete events[i];
-      events[i] = NULL;
+#if DEBUG
+      Serial.print(" [");
+      Serial.print(i);
+      Serial.print("] &");
+      Serial.print((unsigned)events[i]);
+#endif
+      if (events[i] != NULL) {
+        delete events[i];
+        events[i] = NULL;
+      }
     }
-//    long curTime = millis();
-//    long timeSinceLastGoal = curTime - goalTime;
-//    goalTime = curTime;
-//    return timeSinceLastGoal > GOAL_THRESHOLD;
+#if DEBUG
+    Serial.println();
+#endif
+    long curTime = millis();
+    long timeSinceLastGoal = curTime - goalTime;
+    goalTime = curTime;
+#if DEBUG
+    Serial.print("timeSinceGoal");
+    Serial.println(timeSinceLastGoal);
+#endif
+    if (timeSinceLastGoal > GOAL_THRESHOLD) {
+      return true;
+    }
   }
-  return goal;
-  //    if (enablingOrder[0] == 1 && enablingOrder[1] == 2 && disablingOrder[0] == 1
-  //            && disablingOrder[1] == 2) {
-  //        enablingOrder[0] = 0;
-  //        enablingOrder[1] = 0;
-  //        disablingOrder[0] = 0;
-  //        disablingOrder[1] = 0;
-  //        return true;
-  //    }
-  //    if (enablingOrder[0] != 0 && enablingOrder[1] != 0 && disablingOrder[0] != 0
-  //            && disablingOrder[1] != 0) {
-  //        enablingOrder[0] = 0;
-  //        enablingOrder[1] = 0;
-  //        disablingOrder[0] = 0;
-  //        disablingOrder[1] = 0;
-  //    }
-  //
-  //    return false;
+  return false;
 }
 
 boolean GoalAnalyzer::findCascades(boolean state1, boolean state2) {
-  //    if (millis() - triggerTime > 500) {
-  //        enablingOrder[0] = 0;
-  //        enablingOrder[1] = 0;
-  //        disablingOrder[0] = 0;
-  //        disablingOrder[1] = 0;
-  //#if DEBUG
-  //            Serial.println("---------clear by timeout---------");
-  //#endif
-  //    }
   boolean found = false;
   boolean old1 = prevStates[0];
   if (state1 && !old1) {
@@ -124,9 +136,16 @@ boolean GoalAnalyzer::findCascades(boolean state1, boolean state2) {
 
 void GoalAnalyzer::registerCascade(byte number, byte type) {
   Event *event = new Event;
+#if DEBUG
+  Serial.print("Event address: &");
+  Serial.println((unsigned)event);
+#endif
   event->detectorNumber = number;
   event->type = type;
   event->time = millis();
+  if (events[index] != NULL) {
+    delete events[index];
+  }
   events[index] = event;
   index = (index + 1) % 4;
 }
@@ -163,7 +182,7 @@ Button::Button(int pin) {
 }
 
 void Button::work() {
-//  delay(100);
+  //  delay(100);
   prevState = state;
   state = digitalRead(pin);
   if (state && !prevState) {
@@ -230,7 +249,7 @@ void Player::checkButtons() {
   if (increment->isHold() || decrement->isHold()) {
 #if DEBUG
     Serial.print("Game was restarted by player ");
-    Serial.println(player.number);
+    Serial.println(number);
 #endif
     restartPressed = true;
   } else if (increment->isPressed() && score < 9 && !buttonsBlocked) {

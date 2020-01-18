@@ -1,8 +1,6 @@
 #include <Arduino.h>
 #include "kicker.h"
 
-#define DEBUG true
-
 Player player1 = Player(1,
                         new Display(new int[4] {4, 5, 6, 7}),
                         new BallDetector(9),
