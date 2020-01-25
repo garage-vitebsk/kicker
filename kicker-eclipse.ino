@@ -44,7 +44,6 @@ void restartGame() {
   win = false;
   player1.restart();
   player2.restart();
-  //    display1.setBlinkMode(false);
 }
 
 void setup() {

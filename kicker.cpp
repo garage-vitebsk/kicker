@@ -1,6 +1,6 @@
 #include "kicker.h"
 
-#define DEBUG true
+#define DEBUG false
 
 //-------BallDetector-------
 
@@ -156,10 +156,20 @@ Display::Display(int *segmentPins) {
   for (int i = 0; i < 4; i++) {
     pinMode(segmentPins[i], OUTPUT);
   }
+  this->disabledTime = millis();
 }
 
 void Display::writeDigit(int digit) {
-  if (digit < 0) {
+  if (blinkMode) {
+    long curTime = millis();
+    if (curTime - disabledTime > BLINK_TIME) {
+      disabledTime = curTime;
+      enabled = !enabled;
+    }
+  }
+  if (!enabled) {
+    writeDigit(digits[10]);
+  } else if (digit < 0) {
     writeDigit(digits[0]);
   } else if (digit > 9) {
     writeDigit(digits[9]);
@@ -172,6 +182,10 @@ void Display::writeDigit(boolean *segmentValues) {
   for (int i = 0; i < 4; i++) {
     digitalWrite(segmentPins[i], segmentValues[i]);
   }
+}
+
+void Display::setBlinkMode(boolean enabled) {
+  blinkMode = enabled;
 }
 
 // ButtonPanel
@@ -278,6 +292,7 @@ boolean Player::checkGoal() {
 void Player::restart() {
   restartPressed = false;
   buttonsBlocked = false;
+  display->setBlinkMode(false);
   score = 0;
 }
 
@@ -290,6 +305,7 @@ boolean Player::isRestartPressed() {
 }
 
 void Player::blockButtons() {
+  display->setBlinkMode(true);
   buttonsBlocked = true;
 }
 //-----other functions-----

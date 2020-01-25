@@ -38,12 +38,14 @@ class GoalAnalyzer {
 
 // Indicator
 class Display {
+#define BLINK_TIME 500
   public:
     Display(int *segmentPins);
 
     void writeDigit(int digit);
+    void setBlinkMode(boolean enabled);
   private:
-    boolean digits[10][4] = {
+    boolean digits[11][4] = {
       { false, false, false, false  }, // 0
       { true,  false, false, false  }, // 1
       { false, true,  false, false  }, // 2
@@ -54,9 +56,13 @@ class Display {
       { true,  true,  true,  false  }, // 7
       { false, false, false, true   }, // 8
       { true,  false, false, true   }, // 9
+      { true,  true,  true,  true   }  // disabled
     };
 
     int *segmentPins;
+    boolean blinkMode = false;
+    boolean enabled = true;
+    long disabledTime;
     void writeDigit(boolean *segmentValues);
 };
 
