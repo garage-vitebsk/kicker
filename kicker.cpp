@@ -166,6 +166,8 @@ void Display::writeDigit(int digit) {
       disabledTime = curTime;
       enabled = !enabled;
     }
+  } else {
+    enabled = true;
   }
   if (!enabled) {
     writeDigit(digits[10]);
